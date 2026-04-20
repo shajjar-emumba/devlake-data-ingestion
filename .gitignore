@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+
+# environment — copy .env.example → .env and fill in values
+.env
+
+# GitHub App private key
+*.pem
+
+# daily log files (auto-created at runtime)
+logs/
+
+

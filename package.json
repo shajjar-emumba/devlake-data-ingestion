@@ -1,0 +1,19 @@
+{
+  "name": "github-data-sync",
+  "version": "1.0.0",
+  "description": "Syncs GitHub API data (per-file changes, reviews, etc.) into Apache DevLake MySQL database",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "sync": "node index.js",
+    "sync:full": "node index.js --full",
+    "sync:pr-files": "node index.js --collector=pr-files",
+    "sync:pr-files:full": "node index.js --collector=pr-files --full"
+  },
+  "dependencies": {
+    "@octokit/auth-app": "^7.0.0",
+    "@octokit/rest": "^21.0.0",
+    "dotenv": "^16.4.0",
+    "mysql2": "^3.22.0"
+  }
+}

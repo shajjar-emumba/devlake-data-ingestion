@@ -27,9 +27,12 @@ export async function getItems(pool, isFullSync) {
          r.id                AS repo_id,
          r.name              AS repo_name
        FROM pull_requests pr
+       JOIN project_mapping pm ON pr.base_repo_id = pm.row_id AND pm.table = 'repos'
        JOIN repos r ON pr.base_repo_id = r.id
        WHERE pr.pull_request_key IS NOT NULL
          AND r.name IS NOT NULL
+         AND pr.created_date >= '2025-10-01'
+         AND pm.project_name IN ('aiexpert', 'extremenetworksuz')
        ORDER BY pr.created_date DESC`
     : `SELECT
          pr.id               AS pr_id,
@@ -37,15 +40,19 @@ export async function getItems(pool, isFullSync) {
          r.id                AS repo_id,
          r.name              AS repo_name
        FROM pull_requests pr
+       JOIN project_mapping pm ON pr.base_repo_id = pm.row_id AND pm.table = 'repos'
        JOIN repos r ON pr.base_repo_id = r.id
        WHERE pr.pull_request_key IS NOT NULL
          AND r.name IS NOT NULL
+         AND pr.created_date >= '2025-10-01'
+         AND pm.project_name IN ('aiexpert', 'extremenetworksuz')
          AND pr.id NOT IN (
            SELECT DISTINCT pull_request_id FROM pull_request_files
          )
        ORDER BY pr.created_date DESC`;
 
   const [rows] = await pool.execute(query);
+
   logger.debug(`[pr-files] ${rows.length} PR(s) need syncing.`);
   return rows;
 }

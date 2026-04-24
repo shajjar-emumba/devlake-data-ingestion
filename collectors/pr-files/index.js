@@ -2,8 +2,15 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { runMigration } from "../../core/migrate.js";
 import { logger } from "../../core/logger.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const SYNC_FROM_DATE = process.env.SYNC_FROM_DATE || "2025-10-01";
+const SYNC_PROJECTS = process.env.SYNC_PROJECTS.split(",")
+  .map((p) => p.trim())
+  .filter(Boolean);
 
 export const name = "pr-files";
 export const description =
@@ -20,6 +27,8 @@ export async function migrate(pool) {
 export async function getItems(pool, isFullSync) {
   if (isFullSync) logger.info("[pr-files] Full sync mode — querying all PRs.");
 
+  const projectPlaceholders = SYNC_PROJECTS.map(() => "?").join(", ");
+
   const query = isFullSync
     ? `SELECT
          pr.id               AS pr_id,
@@ -31,8 +40,8 @@ export async function getItems(pool, isFullSync) {
        JOIN repos r ON pr.base_repo_id = r.id
        WHERE pr.pull_request_key IS NOT NULL
          AND r.name IS NOT NULL
-         AND pr.created_date >= '2025-10-01'
-         AND pm.project_name IN ('aiexpert', 'extremenetworksuz')
+         AND pr.created_date >= ?
+         AND pm.project_name IN (${projectPlaceholders})
        ORDER BY pr.created_date DESC`
     : `SELECT
          pr.id               AS pr_id,
@@ -44,14 +53,16 @@ export async function getItems(pool, isFullSync) {
        JOIN repos r ON pr.base_repo_id = r.id
        WHERE pr.pull_request_key IS NOT NULL
          AND r.name IS NOT NULL
-         AND pr.created_date >= '2025-10-01'
-         AND pm.project_name IN ('aiexpert', 'extremenetworksuz')
+         AND pr.created_date >= ?
+         AND pm.project_name IN (${projectPlaceholders})
          AND pr.id NOT IN (
            SELECT DISTINCT pull_request_id FROM pull_request_files
          )
        ORDER BY pr.created_date DESC`;
 
-  const [rows] = await pool.execute(query);
+  const params = [SYNC_FROM_DATE, ...SYNC_PROJECTS];
+
+  const [rows] = await pool.execute(query, params);
 
   logger.debug(`[pr-files] ${rows.length} PR(s) need syncing.`);
   return rows;

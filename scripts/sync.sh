@@ -5,7 +5,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # ── Resolve node binary ───────────────────────────────────────────────────────
 # Cron does not load shell profiles so nvm is not available.
 # We hardcode the nvm node path; update this if you switch node versions.
-NODE_BIN="/home/ec2-user/.nvm/versions/node/v24.15.0/bin/node"
+NODE_BIN="/home/emumba/.nvm/versions/node/v22.18.0/bin/node"
 
 # ── Log file for cron output (separate from the app's own logger) ─────────────
 CRON_LOG="$PROJECT_DIR/logs/cron.log"

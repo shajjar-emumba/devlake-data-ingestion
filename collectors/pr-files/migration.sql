@@ -15,3 +15,9 @@ CREATE TABLE IF NOT EXISTS pull_request_files (
   INDEX idx_pr_id   (pull_request_id),
   INDEX idx_repo_pr (repo_id, pr_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS pull_request_files_synced (
+  pull_request_id   VARCHAR(255)  NOT NULL PRIMARY KEY,
+  synced_at         DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+    ON UPDATE CURRENT_TIMESTAMP(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

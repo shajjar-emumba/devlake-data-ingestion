@@ -51,13 +51,12 @@ export async function getItems(pool, isFullSync) {
        FROM pull_requests pr
        JOIN project_mapping pm ON pr.base_repo_id = pm.row_id AND pm.table = 'repos'
        JOIN repos r ON pr.base_repo_id = r.id
+       LEFT JOIN pull_request_files_synced prf ON pr.id = prf.pull_request_id
        WHERE pr.pull_request_key IS NOT NULL
          AND r.name IS NOT NULL
          AND pr.created_date >= ?
          AND pm.project_name IN (${projectPlaceholders})
-         AND pr.id NOT IN (
-           SELECT DISTINCT pull_request_id FROM pull_request_files
-         )
+         AND prf.pull_request_id IS NULL
        ORDER BY pr.created_date DESC`;
 
   const params = [SYNC_FROM_DATE, ...SYNC_PROJECTS];
@@ -125,6 +124,10 @@ export async function upsert(pool, item, files, isFullSync) {
         "DELETE FROM pull_request_files WHERE pull_request_id = ?",
         [item.pr_id],
       );
+      await conn.execute(
+        "DELETE FROM pull_request_files_synced WHERE pull_request_id = ?",
+        [item.pr_id],
+      );
     }
 
     const values = rows.map((f) => [
@@ -149,6 +152,14 @@ export async function upsert(pool, item, files, isFullSync) {
           additions, deletions, changes, previous_filename, blob_url)
        VALUES ${placeholders}`,
       values.flat(),
+    );
+
+    // Mark this PR as synced in the lightweight tracking table
+    await conn.execute(
+      `INSERT INTO pull_request_files_synced (pull_request_id)
+       VALUES (?)
+       ON DUPLICATE KEY UPDATE synced_at = CURRENT_TIMESTAMP(3)`,
+      [item.pr_id],
     );
 
     await conn.commit();
